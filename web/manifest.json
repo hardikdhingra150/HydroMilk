@@ -1,0 +1,19 @@
+{
+  "name": "HydraMilk",
+  "short_name": "HydraMilk",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFF9F3",
+  "theme_color": "#FFF9F3",
+  "description": "Your family\u2019s daily milk and water ledger.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
