@@ -44,18 +44,7 @@ Cloud operations require an internet connection. A write followed by a failed re
 
 The private local ledger stays separate from the cloud ledger. Signing in does not silently upload it. Signing out returns to welcome; Use without an account opens that phone's local records. Uninstalling or clearing app data may remove local records, so export important statements first. The app does not implement account deletion, owner transfer, or whole-family deletion.
 
-## Live backend
 
-Supabase project `dailydrop` / `cfzbckhlwztbqwswzpzq` is already configured. Google and email sign-in are enabled. The app uses PKCE and an external browser. Google Web callback:
-
-```text
-https://cfzbckhlwztbqwswzpzq.supabase.co/auth/v1/callback
-```
-
-The allowlisted Android callback is unchanged:
-
-```text
-com.familyledger.peachledger://login-callback
 ```
 
 Email signup now requests that mobile callback as well. The Google consent-screen display name was updated to HydraMilk and saved in Google Cloud; the underlying Cloud project is still DailyDrop (`dailydrop-512018`). Google secrets stay in Supabase; `config.dailydrop.json` contains only the project URL and public publishable key. Do not include database passwords or service-role/Google secrets in the app.
