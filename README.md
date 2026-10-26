@@ -1,10 +1,10 @@
-# HydraMilk 3.0
+# HydraMilk 3.1
 
 HydraMilk is a Flutter Android app for milk and water bills, redesigned around three screens: **Month, Bills, Family**. The new teal-and-peach interface opens a complete day-by-day month register with milk and water side by side. The launcher name, app header, icon, and exported statements now use HydraMilk. The existing Android application ID and sign-in callback are retained so this APK can update the previous installation and keep its data.
 
 ## Download and setup
 
-[Download the Android APK](https://github.com/hardikdhingra150/HydroMilk/releases/tag/v3.0.0) · [Quick start](docs/QUICK_START.md) · [Configuration](docs/CONFIGURATION.md) · [Authentication](docs/AUTHENTICATION.md)
+[Download the Android APK](https://github.com/hardikdhingra150/HydroMilk/releases/tag/v3.1.0) · [Quick start](docs/QUICK_START.md) · [Configuration](docs/CONFIGURATION.md) · [Authentication](docs/AUTHENTICATION.md)
 
 The GitHub repository is named **HydroMilk**; the installed app is branded **HydraMilk**. The source includes the Flutter app, Android project, bundled fonts and licenses, PostgreSQL migrations, and automated tests. Build outputs and private credentials are excluded.
 
@@ -15,6 +15,14 @@ The GitHub repository is named **HydroMilk**; the installed app is branded **Hyd
 </tr></table>
 
 Screenshots use test fixtures to demonstrate the interface. Fresh installations start empty.
+
+## New in 3.1: reminders
+
+Tap the **bell** in the app header, or **Family → Reminders**. Enable a daily reminder to record milk and water, choose your time (initial suggestion: 8:00 pm), and optionally enable a monthly bill review on the 1st (initial suggestion: 9:00 am). Both start OFF and Android notification permission is requested when you enable one or send a test. Use **Send a test notification** to check your phone.
+
+These are scheduled local notifications: they work without internet after setup, with or without an account. Each phone keeps its own reminder choices. A daily notification opens the current month register; a monthly notification opens the previous month's Bills screen. It reminds you to review bills regardless of balance and does not assert that money is owed. Notifications contain no amounts, family names, or invite codes.
+
+Existing users must install this APK update, open it, and enable reminders on their phone. The earlier APK has no notification receiver; it cannot receive these reminders retroactively. This release does not add server broadcasts or Firebase push messaging. [Reminder setup and troubleshooting](docs/REMINDERS.md) · [Screen preview](docs/screenshots/HydraMilk-reminders.png).
 
 ## Daily use
 
@@ -64,13 +72,13 @@ flutter test
 flutter build apk --release --dart-define-from-file=config.dailydrop.json
 ```
 
-Release output: `build/app/outputs/flutter-apk/app-release.apk`. The delivered `HydraMilk-v3.0.apk` is a universal development-signed release APK for direct personal installation, not a Play Store publication. Its package is `com.familyledger.peach_ledger`, version **3.0.0+5**. A public store release needs a private upload keystore and app bundle.
+Release output: `build/app/outputs/flutter-apk/app-release.apk`. The delivered `HydraMilk-v3.1.apk` is a universal development-signed release APK for direct personal installation, not a Play Store publication. Its package is `com.familyledger.peach_ledger`, version **3.1.0+6**. A public store release needs a private upload keystore and app bundle.
 
 For a separate Supabase project, apply the existing four SQL migrations once in filename order, enable providers, configure callbacks, and create a public client config from `config.example.json`. Do not rerun the initial migrations against the existing live project.
 
 ## Verification
 
-Static analysis: no issues. **25 automated tests passed**, covering empty first launch, dated entries including typed leap-day dates, amount validation, fractions/rounding, historical months/years, paid/partial/unpaid allocation, credit, payment retries/removal, Google PKCE/browser launch/cancellation, and small/large layouts at 320/390/1200 pixels with text up to 140%. Added tests cover 28/29/30/31-day months, leap years, distinct unrecorded/skipped states, mixed and multiple deliveries, aggregate payment status, editing from a day cell, adding to a chosen date, and scrolling to the last date of a month.
+Static analysis: no issues. **39 automated tests passed**. Reminder tests cover opt-in, denied/revoked permission, persistence, custom times, native plugin scheduling parameters, cancellation, cold/warm navigation, leap years, DST gaps, recovery, and 320-pixel layouts at up to 140% text. The existing tests cover empty first launch, dated entries including typed leap-day dates, amount validation, fractions/rounding, historical months/years, paid/partial/unpaid allocation, credit, payment retries/removal, Google PKCE/browser launch/cancellation, and small/large layouts at 320/390/1200 pixels with text up to 140%. Added tests cover 28/29/30/31-day months, leap years, distinct unrecorded/skipped states, mixed and multiple deliveries, aggregate payment status, editing from a day cell, adding to a chosen date, and scrolling to the last date of a month.
 
 Family tests exercise the real Dart Auth/PostgREST client against an in-memory HTTP server: two accounts create/join the same family, share entries/payments, rotate invite codes, remove/rejoin/leave, recover failed reloads, and sign out without stale reads leaking back. Widget tests also operate the actual create/join forms and verify visible invalid-code errors. These are automated integration tests, not a claim of a completed two-physical-phone Google login.
 
@@ -86,8 +94,8 @@ psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 \
   -f supabase/tests/isolation.sql
 ```
 
-Optional preview capture: `HYDRAMILK_PREVIEWS=1 flutter test test/app_test.dart`. Preview records and example accounts are test fixtures and are not bundled as runtime data. Real Google/email delivery, installation, and cross-device operation on physical phones remain unverified.
+Optional preview capture: `HYDRAMILK_PREVIEWS=1 flutter test test/app_test.dart`. Preview records and example accounts are test fixtures and are not bundled as runtime data. Real Google/email delivery, installation, cross-device operation, and Android notification delivery/reboot recovery on physical phones remain unverified. No Android device was connected for this update.
 
-Source: `lib/main.dart` (interface/auth), `lib/store.dart` (local/cloud state and payment allocation), `lib/models.dart` (accounting), `test/` (behavior/integration tests), `supabase/` (schema/security tests), `assets/` (theme image/fonts/licenses).
+Source: `lib/main.dart` (interface/auth), `lib/store.dart` (local/cloud state and payment allocation), `lib/models.dart` (accounting), `lib/reminders.dart` and `lib/reminder_settings.dart` (notifications), `test/` (behavior/integration tests), `supabase/` (schema/security tests), `assets/` (theme image/fonts/licenses).
 
 References: [Flutter Android builds](https://docs.flutter.dev/deployment/android), [Supabase Flutter](https://supabase.com/docs/guides/getting-started/quickstarts/flutter), [Google sign-in](https://supabase.com/docs/guides/auth/social-login/auth-google), [Email redirects](https://supabase.com/docs/reference/dart/auth-signup), [Auth state changes](https://supabase.com/docs/reference/dart/auth-onauthstatechange).

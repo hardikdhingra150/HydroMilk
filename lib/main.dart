@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models.dart';
 import 'store.dart';
+import 'reminders.dart';
+import 'reminder_settings.dart';
 
 const peach = Color(0xFFF7B9A0);
 const paper = Color(0xFFF6F7F2);
@@ -53,13 +55,21 @@ Future<void> main() async {
   } catch (_) {
     error = 'Could not load your family. Check your connection and tap Retry.';
   }
-  runApp(LedgerApp(store: store, startupError: error));
+  final reminders = ReminderController(store.prefs, AndroidReminderBackend());
+  await reminders.initialize();
+  runApp(LedgerApp(store: store, startupError: error, reminders: reminders));
 }
 
 class LedgerApp extends StatelessWidget {
-  const LedgerApp({super.key, required this.store, this.startupError});
+  const LedgerApp({
+    super.key,
+    required this.store,
+    this.startupError,
+    this.reminders,
+  });
   final LedgerStore store;
   final String? startupError;
+  final ReminderController? reminders;
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'HydraMilk',
@@ -135,7 +145,11 @@ class LedgerApp extends StatelessWidget {
       ),
       dividerColor: line,
     ),
-    home: LedgerHome(store: store, startupError: startupError),
+    home: LedgerHome(
+      store: store,
+      startupError: startupError,
+      reminders: reminders,
+    ),
   );
 }
 
@@ -146,9 +160,15 @@ IconData serviceIcon(String s) =>
     s == 'milk' ? Icons.local_drink_outlined : Icons.water_drop_outlined;
 
 class LedgerHome extends StatefulWidget {
-  const LedgerHome({super.key, required this.store, this.startupError});
+  const LedgerHome({
+    super.key,
+    required this.store,
+    this.startupError,
+    this.reminders,
+  });
   final LedgerStore store;
   final String? startupError;
+  final ReminderController? reminders;
   @override
   State<LedgerHome> createState() => _LedgerHomeState();
 }
@@ -168,6 +188,8 @@ class _LedgerHomeState extends State<LedgerHome> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     store.addListener(changed);
+    widget.reminders?.addListener(changed);
+    applyReminderTarget();
     WidgetsBinding.instance.addObserver(this);
     authSubscription = store.client?.auth.onAuthStateChange.listen(
       (event) {
@@ -211,17 +233,49 @@ class _LedgerHomeState extends State<LedgerHome> with WidgetsBindingObserver {
     syncTimer?.cancel();
     authSubscription?.cancel();
     store.removeListener(changed);
+    widget.reminders?.removeListener(changed);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   void changed() {
-    if (mounted) setState(() {});
+    if (mounted) setState(applyReminderTarget);
+  }
+
+  void applyReminderTarget() {
+    final reminders = widget.reminders;
+    if (reminders == null ||
+        (!store.cloud && (store.connected || !store.localModeChosen))) {
+      return;
+    }
+    final target = reminders.pendingTarget;
+    if (target == null) return;
+    reminders.pendingTarget = null;
+    final now = DateTime.now();
+    tab = target == ReminderTarget.bills ? 1 : 0;
+    month = DateTime(now.year, now.month - (tab == 1 ? 1 : 0));
+    statusFilter = 'All';
+    monthView = 'Month view';
+    // A notification can be tapped while settings or a form is on top.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+    });
+  }
+
+  Future<void> reminderSettings() async {
+    final reminders = widget.reminders;
+    if (reminders == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReminderSettingsPage(controller: reminders),
+      ),
+    );
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     foreground = state == AppLifecycleState.resumed;
+    if (foreground) unawaited(widget.reminders?.refresh());
     if (foreground && store.connected && !busy) {
       unawaited(refreshFamily(quiet: true));
     }
@@ -437,8 +491,23 @@ class _LedgerHomeState extends State<LedgerHome> with WidgetsBindingObserver {
     if (store.connected && !store.cloud) return familySetupPage();
     return Scaffold(
       appBar: AppBar(
-        title: brand(),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: brand(),
+        ),
         actions: [
+          if (widget.reminders != null)
+            IconButton(
+              tooltip: 'Reminders',
+              onPressed: reminderSettings,
+              icon: Icon(
+                widget.reminders!.settings.daily ||
+                        widget.reminders!.settings.monthly
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_none_rounded,
+              ),
+            ),
           if (store.cloud)
             IconButton(
               tooltip: 'Refresh family',
@@ -1842,6 +1911,20 @@ class _LedgerHomeState extends State<LedgerHome> with WidgetsBindingObserver {
               label: const Text('Sign in with email'),
             ),
           ],
+        ),
+      ),
+    if (widget.reminders != null)
+      card(
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.notifications_active_outlined),
+          title: const Text(
+            'Reminders',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text('Daily entries and monthly bill checks'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: reminderSettings,
         ),
       ),
     title('Default prices'),

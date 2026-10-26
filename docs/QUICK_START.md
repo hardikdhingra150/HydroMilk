@@ -16,4 +16,8 @@ For sharing, the first person signs in and creates a family, then shares the cod
 
 The export icon on Month shares a CSV with the entire daily register, individual entries, payments, and totals. Date/year selection also works for earlier months.
 
-Install **HydraMilk-v3.0.apk** over the earlier app to keep its records. Fresh installations have no sample bills. Local mode stays separate from a shared family; joining an existing family loads its real records. Export important records before uninstalling or clearing app data.
+Install **HydraMilk-v3.1.apk** over the earlier app to keep its records. Fresh installations have no sample bills. Local mode stays separate from a shared family; joining an existing family loads its real records. Export important records before uninstalling or clearing app data.
+
+## Set reminders on each phone
+
+After installing the update, open HydraMilk and tap the bell at the top. Turn on **Daily entry reminder**, allow Android notifications, and choose a time. You can also enable **Monthly bill review** for the 1st. Tap **Send a test notification** and check the notification tray. Each family member enables reminders on their own phone. [More help](REMINDERS.md).
