@@ -1,4 +1,5 @@
-# HydraMilk 3.1
+# HydraMilk 3.2
+
 
 HydraMilk is a Flutter Android app for milk and water bills, redesigned around three screens: **Month, Bills, Family**. The new teal-and-peach interface opens a complete day-by-day month register with milk and water side by side. The launcher name, app header, icon, and exported statements now use HydraMilk. The existing Android application ID and sign-in callback are retained so this APK can update the previous installation and keep its data.
 
